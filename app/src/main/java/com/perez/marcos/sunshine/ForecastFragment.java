@@ -1,6 +1,9 @@
 package com.perez.marcos.sunshine;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,8 +15,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,6 +37,10 @@ import java.util.List;
 
 
 public class ForecastFragment extends Fragment{
+    private static final String LOG_TAG = ForecastFragment.class.getSimpleName();
+    private static final String FORECAST_SHARE_HASHTAG = "#SunshineApp";
+    private String mForecastStr;
+
     private ArrayAdapter<String> mForecastAdapter;
 
     public ForecastFragment() {
@@ -43,12 +52,25 @@ public class ForecastFragment extends Fragment{
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh){
-            new FetchWeatherTask().execute("08015");
+           updateWeather();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void updateWeather(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+        getString(R.string.pref_location_default));
+        new FetchWeatherTask().execute(location);
     }
 
     @Override
@@ -62,14 +84,22 @@ public class ForecastFragment extends Fragment{
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_forecast, container, false);
 
-//        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
-//        List<String> weekForecast = new ArrayList<String>();
-        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview);
+        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview,new ArrayList<String>());
         ListView lv = (ListView) rootView.findViewById(R.id.listview_forecast);
         lv.setAdapter(mForecastAdapter);
-
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Toast.makeText(getActivity().getApplicationContext(), position, Toast.LENGTH_SHORT).show();
+                mForecastStr = mForecastAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, mForecastStr);
+                startActivity(intent);
+            }
+        });
         return rootView;
     }
+
 
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
@@ -93,8 +123,6 @@ public class ForecastFragment extends Fragment{
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-
-
                 final String FORECAST_BASE_URL ="http://api.openweathermap.org/data/2.5/forecast/daily?";
                 final String QUERY_PARAM = "q";
                 final String FORMAT_PARAM = "mode";
@@ -185,17 +213,23 @@ public class ForecastFragment extends Fragment{
             return shortenedDateFormat.format(time);
         }
 
-        /**
-         * Prepare the weather high/lows for presentation.
-         */
-        private String formatHighLows(double high, double low) {
-            // For presentation, assume the user doesn't care about tenths of a degree.
-            long roundedHigh = Math.round(high);
-            long roundedLow = Math.round(low);
 
-            String highLowStr = roundedHigh + "/" + roundedLow;
-            return highLowStr;
-        }
+
+         private String formatHighLows(double high, double low){
+         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+         String unitType = prefs.getString(getString(R.string.pref_units_key), getString(R.string.pref_units_metric));
+
+         if (unitType.equals(getString(R.string.pref_units_imperial))){
+         high = (high * 1.8) +32;
+         low = (low * 1.8) +32;
+         }
+         else if(!unitType.equals(getString(R.string.pref_units_metric))) {
+         Log.d("LOG_TAG","Unit type not found: " + unitType);
+         }
+         long roundedHigh = Math.round(high);
+         long roundedLow = Math.round(low);
+         return roundedHigh + "/" + roundedLow;
+         }
 
         /**
          * Take the String representing the complete forecast in JSON Format and
