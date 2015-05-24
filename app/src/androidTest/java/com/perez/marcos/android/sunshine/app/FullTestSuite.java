@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.perez.marcos.android.sunshine.app.data;
+package com.perez.marcos.android.sunshine.app;
 
 import android.test.suitebuilder.TestSuiteBuilder;
-import android.util.Log;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 public class FullTestSuite extends TestSuite {
     public static Test suite() {
-        return new TestSuiteBuilder(FullTestSuite.class)
-                .includeAllPackagesUnderHere().build();
+        return new TestSuiteBuilder(FullTestSuite.class).includeAllPackagesUnderHere().build();
     }
 
     public FullTestSuite() {
         super();
-        Log.v("hehe","full test suite");
     }
 }
