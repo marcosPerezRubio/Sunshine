@@ -18,6 +18,8 @@ package com.perez.marcos.android.sunshine.app.data;
 import android.net.Uri;
 import android.test.AndroidTestCase;
 
+import com.perez.marcos.sunshine.data.WeatherContract;
+
 /*
     Uncomment this class when you are ready to test your UriMatcher.  Note that this class utilizes
     constants that are declared with package protection inside of the UriMatcher, which is why
