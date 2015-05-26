@@ -126,7 +126,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
             int locationIndex = locationCursor.getColumnIndex(WeatherContract.LocationEntry._ID);
             locationId = locationCursor.getLong(locationIndex);
         }
-        {
+        else {
             ContentValues contentValuesLocation = new ContentValues();
 
             // Then add the data, along with the corresponding name of the data type, so the content
